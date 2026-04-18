@@ -16,7 +16,8 @@ resource "aws_instance" "minecraft" {
   }
 
   user_data = templatefile("${path.module}/../../scripts/setup.sh", {
-    bucket_name = aws_s3_bucket.minecraft_backup.bucket
+    bucket_name    = aws_s3_bucket.minecraft_backup.bucket
+    whitelist_json = jsonencode([for name in var.whitelist_players : { name = name }])
   })
 
   tags = {

@@ -40,11 +40,8 @@ white-list=true
 PROPS
 
 # Configurar whitelist
-cat > "$MC_DIR/whitelist.json" <<'WHITELIST'
-[
-  {"name": "MossaContruido"},
-  {"name": "myzerx"}
-]
+cat > "$MC_DIR/whitelist.json" <<WHITELIST
+${whitelist_json}
 WHITELIST
 
 # Ajustar permissões

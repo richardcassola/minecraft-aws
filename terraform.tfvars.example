@@ -1,1 +1,2 @@
-alert_email = "seu-email@exemplo.com"
+alert_email       = "seu-email@exemplo.com"
+whitelist_players = ["Player1", "Player2"]

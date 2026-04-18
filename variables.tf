@@ -20,3 +20,8 @@ variable "alert_email" {
   description = "Email para receber alertas de custo"
   type        = string
 }
+
+variable "whitelist_players" {
+  description = "Lista de jogadores permitidos no servidor Minecraft"
+  type        = list(string)
+}
