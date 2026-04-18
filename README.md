@@ -29,7 +29,7 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 ├── main.tf                          # providers + module
 ├── variables.tf                     # variáveis de entrada
 ├── outputs.tf                       # outputs expostos
-├── terraform.tfvars.example         # exemplo de valores para as variáveis
+├── .env.example                     # exemplo de configuração (credenciais + email)
 ├── modules/
 │   └── minecraft/
 │       ├── main.tf                  # data source (AMI)
@@ -56,30 +56,25 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 
 ## Setup
 
-1. Crie um arquivo `.env` com suas credenciais AWS:
+1. Crie um arquivo `.env` com suas configurações:
    ```bash
    cp .env.example .env
-   # Edite o .env com suas credenciais
+   # Edite o .env com suas credenciais e email
    ```
 
-2. Copie o exemplo de variáveis e preencha com seus valores:
+2. Aplique o Terraform:
    ```bash
-   cp terraform.tfvars.example terraform.tfvars
+   (set -a && source .env && set +a && terraform init)
+   (set -a && source .env && set +a && terraform apply)
    ```
 
-3. Aplique o Terraform:
-   ```bash
-   source .env && terraform init
-   source .env && terraform apply
-   ```
-
-4. Conecte ao servidor via SSM:
+3. Conecte ao servidor via SSM:
    ```bash
    # O comando completo é exibido no output do Terraform
    terraform output ssm_command
    ```
 
-5. Conecte no Minecraft: `<ELASTIC_IP>:25565`
+4. Conecte no Minecraft: `<ELASTIC_IP>:25565`
 
 ## Gerenciamento do servidor
 
@@ -97,6 +92,30 @@ terraform output stop_server
 ## Mods
 
 O servidor usa **Fabric** como mod loader. Para instalar mods (ex: Lithium, Starlight, FerriteCore), consulte o guia em [`mods/README.md`](mods/README.md).
+
+## Removendo a infra
+
+Para destruir todos os recursos na AWS:
+
+```bash
+(set -a && source .env && set +a && terraform destroy)
+```
+
+Isso remove **todos** os recursos criados pelo Terraform:
+- EC2 (instância + volume EBS)
+- Elastic IP (um novo IP será atribuído no próximo `terraform apply`)
+- Security Group
+- S3 bucket de backups (incluindo os backups armazenados)
+- IAM Role + policies + Instance Profile
+- Budget e alertas
+
+Para limpar os arquivos locais após o destroy:
+
+```bash
+rm -rf .terraform .terraform.lock.hcl terraform.tfstate* .env
+```
+
+> **Nota:** O Elastic IP muda a cada `terraform destroy` + `terraform apply`. Será necessário atualizar o IP no cliente Minecraft.
 
 ## Estimativa de custos (us-east-1)
 
@@ -151,7 +170,8 @@ O user IAM que executa o Terraform (ex: `terraform-minecraft`) precisa das segui
         "iam:PassRole",
         "iam:TagRole",
         "iam:ListInstanceProfilesForRole",
-        "iam:AttachRolePolicy"
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy"
       ],
       "Resource": [
         "arn:aws:iam::<ACCOUNT_ID>:role/minecraft-server-*",
@@ -222,4 +242,10 @@ O user IAM que executa o Terraform (ex: `terraform-minecraft`) precisa das segui
 
 > Substitua `<ACCOUNT_ID>` pelo ID da sua conta AWS.
 
-Além dessas, o user precisa de permissões para EC2, VPC, EIP e Key Pair, que normalmente já estão cobertas pela policy gerenciada `AmazonEC2FullAccess` ou equivalente.
+### AmazonEC2FullAccess (managed policy)
+
+Além das inline policies acima, o user precisa da managed policy `AmazonEC2FullAccess` anexada diretamente:
+
+IAM → Users → `terraform-minecraft` → Add permissions → Attach policies directly → `AmazonEC2FullAccess`
+
+Essa policy cobre EC2, VPC, EIP, Security Groups e AMI lookups necessários para o Terraform.

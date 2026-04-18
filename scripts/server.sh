@@ -2,7 +2,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SERVER_NAME="minecraft-server"
 
 if [ ! -f "$SCRIPT_DIR/.env" ]; then
   echo "Erro: .env não encontrado. Copie o .env.example:"
@@ -12,6 +11,7 @@ fi
 
 source "$SCRIPT_DIR/.env"
 export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION="$AWS_REGION"
+SERVER_NAME="${SERVER_NAME:-minecraft-server}"
 
 # Buscar instance_id automaticamente pela tag Name
 INSTANCE_ID=$(aws ec2 describe-instances \
@@ -42,8 +42,9 @@ case "$ACTION" in
     echo "Servidor desligado."
     ;;
   status)
-    STATE=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --region "$AWS_REGION" --query "Reservations[0].Instances[0].State.Name" --output text)
-    IP=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --region "$AWS_REGION" --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+    INFO=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --region "$AWS_REGION" --query "Reservations[0].Instances[0].[State.Name,PublicIpAddress]" --output text)
+    STATE=$(echo "$INFO" | cut -f1)
+    IP=$(echo "$INFO" | cut -f2)
     echo "Estado: $STATE"
     if [ "$IP" != "None" ] && [ "$STATE" = "running" ]; then
       echo "IP: $IP:25565"
