@@ -28,6 +28,7 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 ```
 ├── .env.example                     # exemplo de configuração (credenciais + email)
 ├── .gitignore
+├── Makefile                         # atalhos: deploy, start, stop, status, destroy
 ├── main.tf                          # providers + module
 ├── variables.tf                     # variáveis de entrada
 ├── outputs.tf                       # outputs expostos
@@ -42,6 +43,8 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 │       ├── variables.tf             # variáveis do módulo
 │       └── outputs.tf               # outputs do módulo
 ├── scripts/
+│   ├── bootstrap.sh                 # cria user IAM + policies + .env
+│   ├── teardown.sh                  # remove user IAM + limpa arquivos locais
 │   ├── setup.sh                     # user data (bootstrap da instância)
 │   └── server.sh                    # CLI local (start/stop/status)
 └── mods/
@@ -51,28 +54,19 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 ## Pre-requisitos
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.0
-- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) configurado com credenciais admin (`aws configure`)
 - [Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) (opcional, para acesso ao console via SSM)
-- Um user IAM com as permissões listadas abaixo
 
 ## Setup
 
-1. Crie um arquivo `.env` com suas configurações:
+1. Configure o AWS CLI com credenciais de admin:
    ```bash
-   cp .env.example .env
-   ```
-   Preencha os valores:
-   ```bash
-   AWS_ACCESS_KEY_ID=<sua-access-key>
-   AWS_SECRET_ACCESS_KEY=<sua-secret-key>
-   AWS_REGION=us-east-1
-   TF_VAR_alert_email=seu-email@exemplo.com
+   aws configure
    ```
 
-2. Aplique o Terraform:
+2. Suba tudo (IAM + infra):
    ```bash
-   (set -a && source .env && set +a && terraform init)
-   (set -a && source .env && set +a && terraform apply)
+   make up EMAIL=seu-email@exemplo.com
    ```
 
 3. Conecte no Minecraft: `<ELASTIC_IP>:25565`
@@ -80,20 +74,14 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 ## Gerenciamento do servidor
 
 ```bash
-# Via script local
-bash scripts/server.sh start
-bash scripts/server.sh stop
-bash scripts/server.sh status
-
-# Via AWS CLI (outputs do terraform)
-terraform output start_server
-terraform output stop_server
-
-# Acesso ao console do servidor via SSM (opcional, requer Session Manager Plugin)
-terraform output ssm_command
+make start    # liga o servidor
+make stop     # desliga o servidor
+make status   # estado + IP
+make ssh      # acesso ao console via SSM (opcional)
+make destroy  # remove toda a infra da AWS
 ```
 
-> Para usar o SSM, o user IAM precisa da managed policy `AmazonSSMFullAccess` ou permissões equivalentes de `ssm:StartSession`.
+> Para usar `make ssh`, instale o [Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) e adicione a managed policy `AmazonSSMFullAccess` ao user IAM.
 
 ## Mods
 
@@ -104,24 +92,20 @@ O servidor usa **Fabric** como mod loader. Para instalar mods (ex: Lithium, Star
 Para destruir todos os recursos na AWS:
 
 ```bash
-(set -a && source .env && set +a && terraform destroy)
+make destroy
 ```
 
-Isso remove **todos** os recursos criados pelo Terraform:
+Isso remove **todos** os recursos:
 - EC2 (instância + volume EBS)
-- Elastic IP (um novo IP será atribuído no próximo `terraform apply`)
+- Elastic IP (um novo IP será atribuído no próximo `make up`)
 - Security Group
 - S3 bucket de backups (incluindo os backups armazenados)
 - IAM Role + policies + Instance Profile
 - Budget e alertas
+- User IAM `terraform-minecraft` + access keys
+- Arquivos locais (`.env`, `.terraform`, `terraform.tfstate`)
 
-Para limpar os arquivos locais após o destroy:
-
-```bash
-rm -rf .terraform .terraform.lock.hcl terraform.tfstate* .env
-```
-
-> **Nota:** O Elastic IP muda a cada `terraform destroy` + `terraform apply`. Será necessário atualizar o IP no cliente Minecraft.
+> **Nota:** O Elastic IP muda a cada `make destroy` + `make up`. Será necessário atualizar o IP no cliente Minecraft.
 
 ## Estimativa de custos (us-east-1)
 
@@ -149,7 +133,7 @@ Valores estimados com base nos preços on-demand da AWS em us-east-1 (abril/2026
 
 ## Permissões IAM do user Terraform
 
-O user IAM que executa o Terraform (ex: `terraform-minecraft`) precisa das seguintes inline policies configuradas manualmente no Console AWS:
+O `make setup` cria automaticamente o user `terraform-minecraft` com todas as permissões necessárias. As policies criadas são:
 
 ### MinecraftIAMManagement
 
