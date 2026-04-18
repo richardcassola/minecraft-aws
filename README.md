@@ -1,16 +1,19 @@
 # Minecraft Server na AWS
 
-Servidor Minecraft Java na AWS usando Terraform, com backup automático pro S3 e auto-shutdown por inatividade.
+Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático pro S3, auto-shutdown por inatividade e acesso via SSM.
 
 ## Arquitetura
 
 - **EC2** (t3.small) com Amazon Linux 2023 e Java 25 (Corretto)
+- **Fabric** mod loader instalado automaticamente com a versão mais recente do Minecraft
 - **Elastic IP** para IP fixo entre stop/start
-- **Security Group** com SSH restrito por IP e porta 25565 aberta
-- **S3** para backup diário do world (retenção de 7 dias)
-- **IAM Role** na instância para backup S3 e auto-shutdown
-- **AWS Budget** com alerta por email ao atingir 80% e 100% do limite mensal
+- **Security Group** com porta 25565 aberta (sem SSH — acesso via SSM)
+- **SSM Session Manager** para acesso seguro ao servidor sem porta SSH exposta
+- **S3** para backup diário do world (retenção de 7 dias, criptografado com AES256)
+- **IAM Role** na instância para backup S3, auto-shutdown e SSM
+- **AWS Budget** ($20/mês) com alertas por email a 50%, 75% e 100% do limite
 - **Auto-shutdown** que desliga a instância após 15 min sem jogadores
+- **Whitelist** de jogadores configurável via Terraform
 
 ## Estrutura
 
@@ -18,25 +21,29 @@ Servidor Minecraft Java na AWS usando Terraform, com backup automático pro S3 e
 ├── main.tf                          # providers + module
 ├── variables.tf                     # variáveis de entrada
 ├── outputs.tf                       # outputs expostos
+├── terraform.tfvars.example         # exemplo de valores para as variáveis
 ├── modules/
 │   └── minecraft/
 │       ├── main.tf                  # data source (AMI)
-│       ├── ec2.tf                   # key pair + instância
+│       ├── ec2.tf                   # instância EC2
 │       ├── network.tf               # security group + Elastic IP
-│       ├── iam.tf                   # role + policies + instance profile
-│       ├── s3.tf                    # bucket backup + lifecycle
+│       ├── iam.tf                   # role + policies + instance profile + SSM
+│       ├── s3.tf                    # bucket backup + lifecycle + encryption
 │       ├── budget.tf                # alerta de custo
 │       ├── variables.tf             # variáveis do módulo
 │       └── outputs.tf               # outputs do módulo
-└── scripts/
-    ├── setup.sh                     # user data (bootstrap da instância)
-    └── server.sh                    # CLI local (start/stop/status)
+├── scripts/
+│   ├── setup.sh                     # user data (bootstrap da instância)
+│   └── server.sh                    # CLI local (start/stop/status)
+└── mods/
+    └── README.md                    # guia de instalação de mods Fabric
 ```
 
 ## Pre-requisitos
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.0
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) configurado
+- [Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) para acesso via SSM
 - Um user IAM com as permissões listadas abaixo
 
 ## Setup
@@ -46,7 +53,12 @@ Servidor Minecraft Java na AWS usando Terraform, com backup automático pro S3 e
    aws configure
    ```
 
-2. Crie um arquivo `.env` para o script local (opcional):
+2. Copie o exemplo de variáveis e preencha com seus valores:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+
+3. Crie um arquivo `.env` para o script local (opcional):
    ```bash
    AWS_ACCESS_KEY_ID=<sua-key>
    AWS_SECRET_ACCESS_KEY=<sua-secret>
@@ -54,18 +66,19 @@ Servidor Minecraft Java na AWS usando Terraform, com backup automático pro S3 e
    INSTANCE_ID=<preenchido após terraform apply>
    ```
 
-3. Aplique o Terraform:
+4. Aplique o Terraform:
    ```bash
    terraform init
-   terraform apply -var 'alert_email=seu@email.com'
+   terraform apply
    ```
 
-4. Conecte via SSH:
+5. Conecte ao servidor via SSM:
    ```bash
-   ssh -i minecraft-key.pem ec2-user@<ELASTIC_IP>
+   # O comando completo é exibido no output do Terraform
+   terraform output ssm_command
    ```
 
-5. Conecte no Minecraft: `<ELASTIC_IP>:25565`
+6. Conecte no Minecraft: `<ELASTIC_IP>:25565`
 
 ## Gerenciamento do servidor
 
@@ -80,6 +93,10 @@ terraform output start_server
 terraform output stop_server
 ```
 
+## Mods
+
+O servidor usa **Fabric** como mod loader. Para instalar mods (ex: Lithium, Starlight, FerriteCore), consulte o guia em [`mods/README.md`](mods/README.md).
+
 ## Variáveis
 
 | Variável | Descrição | Default |
@@ -87,8 +104,8 @@ terraform output stop_server
 | `region` | Região AWS | `us-east-1` |
 | `instance_type` | Tipo da instância EC2 | `t3.small` |
 | `server_name` | Nome tag do servidor | `minecraft-server` |
-| `allowed_ssh_ips` | CIDRs permitidos para SSH | `["179.125.152.41/32", "191.193.227.47/32"]` |
 | `alert_email` | Email para alertas de custo | (obrigatório) |
+| `whitelist_players` | Lista de jogadores permitidos | (obrigatório) |
 
 ## Permissões IAM do user Terraform
 
