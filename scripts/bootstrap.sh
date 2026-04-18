@@ -81,9 +81,10 @@ aws iam put-user-policy --user-name "$IAM_USER" --policy-name MinecraftBudgetMan
   }]
 }"
 
-# Managed policy
-echo "Anexando AmazonEC2FullAccess..."
+# Managed policies
+echo "Anexando managed policies..."
 aws iam attach-user-policy --user-name "$IAM_USER" --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
+aws iam attach-user-policy --user-name "$IAM_USER" --policy-arn arn:aws:iam::aws:policy/AmazonSSMFullAccess
 
 # Deletar access keys antigas (limite de 2 por user)
 EXISTING_KEYS=$(aws iam list-access-keys --user-name "$IAM_USER" --query "AccessKeyMetadata[].AccessKeyId" --output text 2>/dev/null || true)

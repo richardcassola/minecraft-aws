@@ -81,7 +81,7 @@ make ssh      # acesso ao console via SSM (opcional)
 make destroy  # remove toda a infra da AWS
 ```
 
-> Para usar `make ssh`, instale o [Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) e adicione a managed policy `AmazonSSMFullAccess` ao user IAM.
+> Para usar `make ssh`, instale o [Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html).
 
 ## Mods
 
