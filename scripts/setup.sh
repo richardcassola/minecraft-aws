@@ -11,18 +11,19 @@ dnf install -y java-25-amazon-corretto-headless aws-cli
 useradd -r -m -d "$MC_DIR" -s /bin/bash "$MC_USER"
 mkdir -p "$MC_DIR"
 
-# Baixar Minecraft Server (latest)
+# Baixar Minecraft Server com Fabric
 MANIFEST_URL="https://launchermeta.mojang.com/mc/game/version_manifest.json"
 LATEST_VERSION=$(curl -s "$MANIFEST_URL" | python3 -c "import sys,json; print(json.load(sys.stdin)['latest']['release'])")
-VERSION_URL=$(curl -s "$MANIFEST_URL" | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-target = '$LATEST_VERSION'
-url = next(v['url'] for v in data['versions'] if v['id'] == target)
-print(url)
-")
-SERVER_URL=$(curl -s "$VERSION_URL" | python3 -c "import sys,json; print(json.load(sys.stdin)['downloads']['server']['url'])")
-curl -o "$MC_DIR/server.jar" "$SERVER_URL"
+
+FABRIC_INSTALLER_URL="https://meta.fabricmc.net/v2/versions/installer"
+FABRIC_INSTALLER=$(curl -s "$FABRIC_INSTALLER_URL" | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['url'])")
+
+curl -o "$MC_DIR/fabric-installer.jar" "$FABRIC_INSTALLER"
+cd "$MC_DIR"
+java -jar fabric-installer.jar server -mcversion "$LATEST_VERSION" -downloadMinecraft
+rm -f fabric-installer.jar
+
+mkdir -p "$MC_DIR/mods"
 
 # Aceitar EULA
 echo "eula=true" > "$MC_DIR/eula.txt"
@@ -56,7 +57,7 @@ After=network.target
 [Service]
 User=$MC_USER
 WorkingDirectory=$MC_DIR
-ExecStart=/usr/bin/java -Xmx1536M -Xms1024M -jar server.jar nogui
+ExecStart=/usr/bin/java -Xmx1536M -Xms1024M -jar fabric-server-launch.jar nogui
 Restart=on-failure
 RestartSec=10
 

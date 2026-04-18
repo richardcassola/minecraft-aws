@@ -20,6 +20,9 @@ terraform.tfvars.json
 # Keys
 *.pem
 
+# Mods
+mods/*.jar
+
 # AWS CLI
 aws/
 awscliv2.zip
