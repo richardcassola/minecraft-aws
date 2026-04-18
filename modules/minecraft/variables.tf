@@ -13,12 +13,13 @@ variable "alert_email" {
   type        = string
 }
 
-variable "whitelist_players" {
-  description = "Lista de jogadores permitidos no servidor Minecraft"
-  type        = list(string)
-}
-
 variable "region" {
   description = "AWS region"
   type        = string
+}
+
+variable "whitelist_players" {
+  description = "Lista de jogadores permitidos no servidor"
+  type        = list(string)
+  default     = []
 }

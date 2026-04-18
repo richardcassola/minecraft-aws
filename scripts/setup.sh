@@ -37,13 +37,16 @@ difficulty=hard
 gamemode=survival
 motd=Um servidor Minecraft na AWS!
 view-distance=10
-white-list=true
+white-list=${length(whitelist_players) > 0 ? "true" : "false"}
+enforce-whitelist=${length(whitelist_players) > 0 ? "true" : "false"}
 PROPS
 
+%{ if length(whitelist_players) > 0 ~}
 # Configurar whitelist
-cat > "$MC_DIR/whitelist.json" <<WHITELIST
-${whitelist_json}
+cat > "$MC_DIR/whitelist.json" <<'WHITELIST'
+${jsonencode([for name in whitelist_players : { uuid = "", name = name }])}
 WHITELIST
+%{ endif ~}
 
 # Ajustar permissões
 chown -R "$MC_USER":"$MC_USER" "$MC_DIR"

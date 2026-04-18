@@ -22,6 +22,8 @@ variable "alert_email" {
 }
 
 variable "whitelist_players" {
-  description = "Lista de jogadores permitidos no servidor Minecraft"
+  description = "Lista de jogadores permitidos no servidor"
   type        = list(string)
+  default     = []
 }
+

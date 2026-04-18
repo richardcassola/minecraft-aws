@@ -51,15 +51,16 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 ## Pre-requisitos
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.0
-- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) configurado
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 - [Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) para acesso via SSM
 - Um user IAM com as permissões listadas abaixo
 
 ## Setup
 
-1. Configure as credenciais AWS:
+1. Crie um arquivo `.env` com suas credenciais AWS:
    ```bash
-   aws configure
+   cp .env.example .env
+   # Edite o .env com suas credenciais
    ```
 
 2. Copie o exemplo de variáveis e preencha com seus valores:
@@ -67,27 +68,19 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
    cp terraform.tfvars.example terraform.tfvars
    ```
 
-3. Crie um arquivo `.env` para o script local (opcional):
+3. Aplique o Terraform:
    ```bash
-   AWS_ACCESS_KEY_ID=<sua-key>
-   AWS_SECRET_ACCESS_KEY=<sua-secret>
-   AWS_REGION=us-east-1
-   INSTANCE_ID=<preenchido após terraform apply>
+   source .env && terraform init
+   source .env && terraform apply
    ```
 
-4. Aplique o Terraform:
-   ```bash
-   terraform init
-   terraform apply
-   ```
-
-5. Conecte ao servidor via SSM:
+4. Conecte ao servidor via SSM:
    ```bash
    # O comando completo é exibido no output do Terraform
    terraform output ssm_command
    ```
 
-6. Conecte no Minecraft: `<ELASTIC_IP>:25565`
+5. Conecte no Minecraft: `<ELASTIC_IP>:25565`
 
 ## Gerenciamento do servidor
 
@@ -129,7 +122,7 @@ Valores estimados com base nos preços on-demand da AWS em us-east-1 (abril/2026
 | `instance_type` | Tipo da instância EC2 | `t3.small` |
 | `server_name` | Nome tag do servidor | `minecraft-server` |
 | `alert_email` | Email para alertas de custo | (obrigatório) |
-| `whitelist_players` | Lista de jogadores permitidos | (obrigatório) |
+| `whitelist_players` | Lista de jogadores permitidos | `[]` |
 
 ## Permissões IAM do user Terraform
 
@@ -147,19 +140,20 @@ O user IAM que executa o Terraform (ex: `terraform-minecraft`) precisa das segui
         "iam:CreateRole",
         "iam:DeleteRole",
         "iam:GetRole",
-        "iam:TagRole",
         "iam:PutRolePolicy",
         "iam:GetRolePolicy",
         "iam:DeleteRolePolicy",
         "iam:ListRolePolicies",
         "iam:ListAttachedRolePolicies",
-        "iam:ListInstanceProfilesForRole",
         "iam:CreateInstanceProfile",
         "iam:DeleteInstanceProfile",
         "iam:GetInstanceProfile",
         "iam:AddRoleToInstanceProfile",
         "iam:RemoveRoleFromInstanceProfile",
-        "iam:PassRole"
+        "iam:PassRole",
+        "iam:TagRole",
+        "iam:ListInstanceProfilesForRole",
+        "iam:AttachRolePolicy"
       ],
       "Resource": [
         "arn:aws:iam::<ACCOUNT_ID>:role/minecraft-server-*",
@@ -188,9 +182,22 @@ O user IAM que executa o Terraform (ex: `terraform-minecraft`) precisa das segui
         "s3:PutLifecycleConfiguration",
         "s3:GetLifecycleConfiguration",
         "s3:ListBucket",
-        "s3:GetBucketAcl"
+        "s3:GetBucketAcl",
+        "s3:GetBucketCors",
+        "s3:PutBucketCors",
+        "s3:GetEncryptionConfiguration",
+        "s3:PutEncryptionConfiguration",
+        "s3:GetBucketPublicAccessBlock",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:GetBucketVersioning",
+        "s3:GetBucketWebsite",
+        "s3:GetBucketLogging",
+        "s3:GetBucketObjectLockConfiguration",
+        "s3:GetReplicationConfiguration",
+        "s3:GetAccelerateConfiguration",
+        "s3:GetBucketRequestPayment"
       ],
-      "Resource": "arn:aws:s3:::minecraft-server-backups-*"
+      "Resource": "arn:aws:s3:::minecraft-server-*"
     }
   ]
 }
