@@ -17,9 +17,3 @@ variable "region" {
   description = "AWS region"
   type        = string
 }
-
-variable "whitelist_players" {
-  description = "Lista de jogadores permitidos no servidor"
-  type        = list(string)
-  default     = []
-}

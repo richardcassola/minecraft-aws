@@ -20,9 +20,8 @@ provider "aws" {
 module "minecraft" {
   source = "./modules/minecraft"
 
-  region            = var.region
-  instance_type     = var.instance_type
-  server_name       = var.server_name
-  alert_email       = var.alert_email
-  whitelist_players = var.whitelist_players
+  region        = var.region
+  instance_type = var.instance_type
+  server_name   = var.server_name
+  alert_email   = var.alert_email
 }

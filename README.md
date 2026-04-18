@@ -22,7 +22,6 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 - **IAM Role** na instância para backup S3, auto-shutdown e SSM
 - **AWS Budget** ($20/mês) com alertas por email a 50%, 75% e 100% do limite
 - **Auto-shutdown** que desliga a instância após 15 min sem jogadores
-- **Whitelist** de jogadores configurável via Terraform
 
 ## Estrutura
 
@@ -122,7 +121,6 @@ Valores estimados com base nos preços on-demand da AWS em us-east-1 (abril/2026
 | `instance_type` | Tipo da instância EC2 | `t3.small` |
 | `server_name` | Nome tag do servidor | `minecraft-server` |
 | `alert_email` | Email para alertas de custo | (obrigatório) |
-| `whitelist_players` | Lista de jogadores permitidos | `[]` |
 
 ## Permissões IAM do user Terraform
 
