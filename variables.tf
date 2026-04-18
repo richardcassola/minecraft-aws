@@ -16,11 +16,6 @@ variable "server_name" {
   default     = "minecraft-server"
 }
 
-variable "allowed_ssh_ips" {
-  description = "IPs permitidos para SSH (ex: [\"152.116.223.186/32\", \"171.126.238.193/32\"])"
-  type        = list(string)
-}
-
 variable "alert_email" {
   description = "Email para receber alertas de custo"
   type        = string

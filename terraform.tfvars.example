@@ -1,2 +1,1 @@
-alert_email     = "seu-email@exemplo.com"
-allowed_ssh_ips = ["152.116.223.186/32", "171.126.238.193/32"]
+alert_email = "seu-email@exemplo.com"

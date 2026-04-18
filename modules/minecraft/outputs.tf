@@ -8,9 +8,9 @@ output "instance_id" {
   value       = aws_instance.minecraft.id
 }
 
-output "ssh_command" {
-  description = "SSH command to connect to the server"
-  value       = "ssh -i minecraft-key.pem ec2-user@${aws_eip.minecraft.public_ip}"
+output "ssm_command" {
+  description = "Command to connect to the server via SSM"
+  value       = "aws ssm start-session --target ${aws_instance.minecraft.id} --region ${var.region}"
 }
 
 output "minecraft_address" {

@@ -8,9 +8,9 @@ output "instance_id" {
   value       = module.minecraft.instance_id
 }
 
-output "ssh_command" {
-  description = "SSH command to connect to the server"
-  value       = module.minecraft.ssh_command
+output "ssm_command" {
+  description = "Command to connect to the server via SSM"
+  value       = module.minecraft.ssm_command
 }
 
 output "minecraft_address" {

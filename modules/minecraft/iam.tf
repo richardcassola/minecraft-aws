@@ -64,3 +64,8 @@ resource "aws_iam_instance_profile" "minecraft" {
   name = "${var.server_name}-profile"
   role = aws_iam_role.minecraft.name
 }
+
+resource "aws_iam_role_policy_attachment" "minecraft_ssm" {
+  role       = aws_iam_role.minecraft.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}

@@ -36,7 +36,16 @@ difficulty=hard
 gamemode=survival
 motd=Um servidor Minecraft na AWS!
 view-distance=10
+white-list=true
 PROPS
+
+# Configurar whitelist
+cat > "$MC_DIR/whitelist.json" <<'WHITELIST'
+[
+  {"name": "MossaContruido"},
+  {"name": "myzerx"}
+]
+WHITELIST
 
 # Ajustar permissões
 chown -R "$MC_USER":"$MC_USER" "$MC_DIR"

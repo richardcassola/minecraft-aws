@@ -8,11 +8,6 @@ variable "server_name" {
   type        = string
 }
 
-variable "allowed_ssh_ips" {
-  description = "IPs permitidos para SSH"
-  type        = list(string)
-}
-
 variable "alert_email" {
   description = "Email para receber alertas de custo"
   type        = string
