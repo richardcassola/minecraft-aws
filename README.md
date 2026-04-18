@@ -26,10 +26,11 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 ## Estrutura
 
 ```
+├── .env.example                     # exemplo de configuração (credenciais + email)
+├── .gitignore
 ├── main.tf                          # providers + module
 ├── variables.tf                     # variáveis de entrada
 ├── outputs.tf                       # outputs expostos
-├── .env.example                     # exemplo de configuração (credenciais + email)
 ├── modules/
 │   └── minecraft/
 │       ├── main.tf                  # data source (AMI)
@@ -51,7 +52,7 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.0
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-- [Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) para acesso via SSM
+- [Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) (opcional, para acesso ao console via SSM)
 - Um user IAM com as permissões listadas abaixo
 
 ## Setup
@@ -59,7 +60,13 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
 1. Crie um arquivo `.env` com suas configurações:
    ```bash
    cp .env.example .env
-   # Edite o .env com suas credenciais e email
+   ```
+   Preencha os valores:
+   ```bash
+   AWS_ACCESS_KEY_ID=<sua-access-key>
+   AWS_SECRET_ACCESS_KEY=<sua-secret-key>
+   AWS_REGION=us-east-1
+   TF_VAR_alert_email=seu-email@exemplo.com
    ```
 
 2. Aplique o Terraform:
@@ -68,13 +75,7 @@ Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático
    (set -a && source .env && set +a && terraform apply)
    ```
 
-3. Conecte ao servidor via SSM:
-   ```bash
-   # O comando completo é exibido no output do Terraform
-   terraform output ssm_command
-   ```
-
-4. Conecte no Minecraft: `<ELASTIC_IP>:25565`
+3. Conecte no Minecraft: `<ELASTIC_IP>:25565`
 
 ## Gerenciamento do servidor
 
@@ -87,7 +88,12 @@ bash scripts/server.sh status
 # Via AWS CLI (outputs do terraform)
 terraform output start_server
 terraform output stop_server
+
+# Acesso ao console do servidor via SSM (opcional, requer Session Manager Plugin)
+terraform output ssm_command
 ```
+
+> Para usar o SSM, o user IAM precisa da managed policy `AmazonSSMFullAccess` ou permissões equivalentes de `ssm:StartSession`.
 
 ## Mods
 
