@@ -2,6 +2,15 @@
 
 Servidor Minecraft Java (Fabric) na AWS usando Terraform, com backup automático pro S3, auto-shutdown por inatividade e acesso via SSM.
 
+## Stack
+
+- **Cloud:** AWS (EC2, S3, IAM, SSM, Budgets)
+- **IaC:** Terraform
+- **OS:** Amazon Linux 2023
+- **Runtime:** Java 25 (Amazon Corretto)
+- **Servidor:** Minecraft Java Edition com Fabric mod loader
+- **Shell scripts:** Bash (bootstrap da instância + CLI local)
+
 ## Arquitetura
 
 - **EC2** (t3.small) com Amazon Linux 2023 e Java 25 (Corretto)
@@ -96,6 +105,21 @@ terraform output stop_server
 ## Mods
 
 O servidor usa **Fabric** como mod loader. Para instalar mods (ex: Lithium, Starlight, FerriteCore), consulte o guia em [`mods/README.md`](mods/README.md).
+
+## Estimativa de custos (us-east-1)
+
+Valores estimados com base nos preços on-demand da AWS em us-east-1 (abril/2026). O servidor é projetado para ser ligado/desligado sob demanda — os custos variam conforme o uso.
+
+| Recurso | Tipo | 4h/dia | 8h/dia | 24/7 |
+|---|---|---|---|---|
+| EC2 | t3.small ($0,0208/h) | $2,50 | $4,99 | $15,18 |
+| EBS | gp3 30 GB | $2,40 | $2,40 | $2,40 |
+| Elastic IP | IPv4 público ($0,005/h) | $3,65 | $3,65 | $3,65 |
+| S3 | Backups (7 dias retenção) | ~$0,10 | ~$0,10 | ~$0,10 |
+| Data transfer | Desprezível (2 jogadores) | — | — | — |
+| **Total estimado** | | **~$8,65/mês** | **~$11,14/mês** | **~$21,33/mês** |
+
+> **Nota:** O EBS e o Elastic IP são cobrados 24/7, mesmo com a instância desligada. O Elastic IP sozinho representa ~$3,65/mês fixo. O budget de $20/mês com alertas a 50%, 75% e 100% ajuda a manter o controle.
 
 ## Variáveis
 
